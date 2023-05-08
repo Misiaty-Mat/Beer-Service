@@ -1,8 +1,7 @@
 package com.spring6framework.spring6restmvc.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.spring6framework.spring6restmvc.model.Customer;
+import com.spring6framework.spring6restmvc.model.CustomerDTO;
 import com.spring6framework.spring6restmvc.services.CustomerService;
 import com.spring6framework.spring6restmvc.services.CustomerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +45,7 @@ class CustomerControllerTest {
     ArgumentCaptor<UUID> uuidArgumentCaptor;
 
     @Captor
-    ArgumentCaptor<Customer> customerArgumentCaptor;
+    ArgumentCaptor<CustomerDTO> customerArgumentCaptor;
 
     @BeforeEach
     void setUp() {
@@ -55,7 +54,9 @@ class CustomerControllerTest {
 
     @Test
     void testPatchCustomer() throws Exception {
-        Customer customer = customerServiceImpl.listCustomers().get(0);
+        CustomerDTO customer = customerServiceImpl.listCustomers().get(0);
+
+        given(customerService.patchCustomerById(any(), any())).willReturn(Optional.of(customer));
 
         Map<String, Object> customerMap = new HashMap<>();
         customerMap.put("customerName", "Original name");
@@ -69,12 +70,14 @@ class CustomerControllerTest {
         verify(customerService).patchCustomerById(uuidArgumentCaptor.capture(), customerArgumentCaptor.capture());
 
         assertThat(customer.getId()).isEqualTo(uuidArgumentCaptor.getValue());
-        assertThat(customerMap.get("customerName")).isEqualTo(customerArgumentCaptor.getValue().getCustomerName());
+        assertThat(customerMap.get("name")).isEqualTo(customerArgumentCaptor.getValue().getName());
     }
 
     @Test
     void testDeleteCustomer() throws Exception {
-        Customer customer = customerServiceImpl.listCustomers().get(0);
+        CustomerDTO customer = customerServiceImpl.listCustomers().get(0);
+
+        given(customerService.deleteCustomerById(any())).willReturn(true);
 
         mockMvc.perform(delete(CustomerController.CUSTOMER_PATH_ID, customer.getId())
                     .accept(MediaType.APPLICATION_JSON))
@@ -87,7 +90,10 @@ class CustomerControllerTest {
 
     @Test
     void testUpdateCustomer() throws Exception {
-        Customer customer = customerServiceImpl.listCustomers().get(0);
+        CustomerDTO customer = customerServiceImpl.listCustomers().get(0);
+
+        given(customerService.updateCustomerById(any(), any())).willReturn(Optional.of(customer));
+
 
         mockMvc.perform(put(CustomerController.CUSTOMER_PATH_ID, customer.getId())
                     .accept(MediaType.APPLICATION_JSON)
@@ -95,16 +101,16 @@ class CustomerControllerTest {
                     .content(objectMapper.writeValueAsString(customer)))
                 .andExpect(status().isNoContent());
 
-        verify(customerService).updateCustomerById(any(UUID.class), any(Customer.class));
+        verify(customerService).updateCustomerById(any(UUID.class), any(CustomerDTO.class));
     }
 
     @Test
     void testCreateNewCustomer() throws Exception {
-        Customer customer = customerServiceImpl.listCustomers().get(0);
+        CustomerDTO customer = customerServiceImpl.listCustomers().get(0);
         customer.setVersion(null);
         customer.setId(null);
 
-        given(customerService.saveNewCustomer(any(Customer.class))).willReturn(customerServiceImpl.listCustomers().get(1));
+        given(customerService.saveNewCustomer(any(CustomerDTO.class))).willReturn(customerServiceImpl.listCustomers().get(1));
 
         mockMvc.perform(post(CustomerController.CUSTOMER_PATH)
                     .accept(MediaType.APPLICATION_JSON)
@@ -136,7 +142,7 @@ class CustomerControllerTest {
 
     @Test
     void getCustomerById() throws Exception {
-        Customer testCustomer = customerServiceImpl.listCustomers().get(0);
+        CustomerDTO testCustomer = customerServiceImpl.listCustomers().get(0);
 
         given(customerService.getCustomerById(testCustomer.getId())).willReturn(Optional.of(testCustomer));
 
@@ -145,6 +151,6 @@ class CustomerControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id", is(testCustomer.getId().toString())))
-                .andExpect(jsonPath("$.customerName", is(testCustomer.getCustomerName())));
+                .andExpect(jsonPath("$.name", is(testCustomer.getName())));
     }
 }
