@@ -1,5 +1,6 @@
 package com.spring6framework.spring6restmvc.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring6framework.spring6restmvc.model.BeerDTO;
 import com.spring6framework.spring6restmvc.services.BeerService;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -104,6 +106,21 @@ class BeerControllerTest {
     }
 
     @Test
+    void testUpdateWithNullParameters() throws Exception {
+        BeerDTO oldBeer = beerServiceImp.listBeers().get(0);
+        BeerDTO newBeer = BeerDTO.builder().build();
+
+        given(beerService.updateBeerById(any(), any())).willReturn(Optional.of(oldBeer));
+
+        mockMvc.perform(put(BeerController.BEER_PATH_ID, oldBeer.getId())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(newBeer)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(6)));
+    }
+
+    @Test
     void testCreateNewBeer() throws Exception {
         BeerDTO beer = beerServiceImp.listBeers().get(0);
         beer.setVersion(null);
@@ -117,6 +134,23 @@ class BeerControllerTest {
                         .content(objectMapper.writeValueAsString(beer)))
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Location"));
+    }
+
+    @Test
+    void testCreateBeerNullBeerName() throws Exception {
+        BeerDTO dto = BeerDTO.builder().build();
+
+        given(beerService.saveNewBeer(any(BeerDTO.class))).willReturn(beerServiceImp.listBeers().get(1));
+
+        MvcResult mvcResult = mockMvc.perform(post(BeerController.BEER_PATH)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(6)))
+                .andReturn();
+
+        System.out.println(mvcResult.getResponse().getContentAsString());
     }
 
     @Test
