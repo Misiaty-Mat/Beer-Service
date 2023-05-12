@@ -63,7 +63,7 @@ public class BeerServiceImpl implements BeerService {
     }
 
     @Override
-    public List<BeerDTO> listBeers() {
+    public List<BeerDTO> listBeers(String beerName, BeerStyle beerStyle, Boolean showInventory) {
         return new ArrayList<>(beerMap.values());
     }
 
@@ -118,7 +118,7 @@ public class BeerServiceImpl implements BeerService {
         BeerDTO existing = beerMap.get(beerId);
 
 
-        if (hasText(beer.getBeerName())) {
+        if (StringUtils.hasText(beer.getBeerName())) {
             existing.setBeerName(beer.getBeerName());
         }
         if (beer.getBeerStyle() != null) {
@@ -130,7 +130,7 @@ public class BeerServiceImpl implements BeerService {
         if (beer.getQuantityOnHand() != null) {
             existing.setQuantityOnHand(beer.getQuantityOnHand());
         }
-        if (hasText(beer.getUpc())) {
+        if (StringUtils.hasText(beer.getUpc())) {
             existing.setUpc(beer.getUpc());
         }
 
