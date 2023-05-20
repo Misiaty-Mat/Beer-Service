@@ -57,7 +57,7 @@ class BeerControllerTest {
         beerServiceImp = new BeerServiceImpl();
     }
 
-    public static final String USERNAME = "user";
+    public static final String USERNAME = "user1";
     public static final String PASSWORD = "password";
 
     @Test
